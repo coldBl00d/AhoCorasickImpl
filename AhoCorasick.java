@@ -10,14 +10,16 @@ public class AhoCorasick {
 	
 	public static class Node {
 		public char element; 
-		public int output; 
+		public List<Integer> output; 
 		public List<Node> children;
 		public Node failNode;
 		public Node parent; 
 		
-		public Node(char element, int output) {
+		public Node(char element, int o) {
 			this.element = element; 
-			this.output = output; 
+			this.output = new ArrayList<Integer>();
+			if(o != -1)
+				this.output.add(o);
 			this.children = new ArrayList<Node>();
 		}
 		
@@ -42,22 +44,24 @@ public class AhoCorasick {
 		}
 		
 		public void addOutput(int i) {
-			this.output+=i;
+			if(i!=-1)
+				this.output.add(i);
 		}
 		
 	}
 	
 	public static Node root = new AhoCorasick.Node('.',0);
 	
-	public static void buildTrie(String[] dictionary, int[] output, int first, int last) {
-		for(int i =first; i<=last; i++) {
+	public static void buildTrie(String[] dictionary, int[] output) {
+		root.failNode = root;
+		for(int i =0; i<dictionary.length; i++) {
 			String cWord = dictionary[i];
 			Node currentRoot = AhoCorasick.root;
 			for(int j=0; j<cWord.length(); j++) {
 				char cChar = cWord.charAt(j);
-				int o=0;
+				int o=-1;
 				if(j == cWord.length()-1) {
-					o = output[i]; 
+					o = i; 
 				}
 				Node newNode = new Node(cChar,o);
 				int index = currentRoot.childExist(newNode);
@@ -71,10 +75,7 @@ public class AhoCorasick {
 				}else {
 					System.out.println("Child : " +  newNode.element + " does exist exist under current root "+currentRoot.element +", making it current root");
 					currentRoot = currentRoot.children.get(index);
-					if (newNode.output!=0) {
-						System.out.println("Child got an output, adding it to existing node and then making it root");
-						currentRoot.addOutput(newNode.output);
-					}
+					currentRoot.addOutput(o);
 				}
 			}
 		}
@@ -111,13 +112,50 @@ public class AhoCorasick {
 		System.out.println("Done");
 	}
 	
+	public static int process(String dna, int[] health,  int first, int last) {
+		Node pointer= root;
+		int index;
+		int ho =0;
+		for(int i =0; i<dna.length();) {
+			char curChar = dna.charAt(i);
+			System.out.println("Current char :" +curChar);
+			index = pointer.children.indexOf(new Node(curChar, -1));
+			if(index != -1) {
+				System.out.println("Found "+curChar +" as child of "+ pointer.element);
+				pointer = pointer.children.get(index);
+				i++;
+			}else {
+				System.out.println("Failing on : "+pointer.element + "For "+ curChar);
+				if(pointer.equals(root)) {
+					//System.out.println("Failing on : "+pointer.element + "For "+ curChar);
+					i++;
+				}
+				pointer = pointer.failNode;
+				
+			}
+			if(pointer.output.size()>0) {
+				for(int ind: pointer.output) {
+					if(ind >= first && ind <= last) {
+						ho+=health[ind];
+					}
+				}
+			}
+		}
+		return ho;
+	}
+	
 	public static void main(String[] arg ) {
 		
-		String[] d = {"a", "ab", "bc","bbc","cd","a"};
-		int[] o = {5,10,15,1,2,3};
+		//String[] d = {"a", "ab", "bc","bbc","cd","a"};
+		String[] d = {"a","b","c","aa","d","b"};
 		
-		buildTrie(d,o,0,5);
+		//int[] o = {5,10,15,1,2,3};
+		int[] o = {1,2,3,4,5,6};
+		
+		buildTrie(d,o);
 		printChilds(root);
+		//System.out.println(process("caaab", o, 1, 5));
+		System.out.println(process("bcdybc", o, 2, 4));
 		
 	}
 	
@@ -125,7 +163,12 @@ public class AhoCorasick {
 		System.out.println("Parent: "+n.element);
 		System.out.println("Children :");
 		for(Node no: n.children) {
-			System.out.print(no.element+"("+no.output+")"+"Fail:"+no.failNode.element+"  ");
+			System.out.print(no.element+"Fail:"+no.failNode.element+"  ");
+			System.out.print( "Output Indexes (");
+			for(int i : no.output)
+			  System.out.print(i+" ");
+			System.out.println(" )");
+			System.out.println();
 		}
 		System.out.println();
 		
