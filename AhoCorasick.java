@@ -10,17 +10,17 @@ public class AhoCorasick {
 	
 	public static class Node {
 		public char element; 
-		public List<Integer> output; 
-		public List<Node> children;
+		public int[] output; 
+		public Node[] children;
 		public Node failNode;
 		public Node parent; 
 		
-		public Node(char element, int o) {
+		public Node(char element, int o, int maxOutput) {
 			this.element = element; 
-			this.output = new ArrayList<Integer>();
+			this.output = new int[maxOutput];
 			if(o != -1)
-				this.output.add(o);
-			this.children = new ArrayList<Node>();
+				this.output[output.length]=o;
+			this.children = new Node[26];
 		}
 		
 		@Override
@@ -34,23 +34,23 @@ public class AhoCorasick {
 			return false;
 		}
 
-		public int childExist(Node n) {
+		/*public int childExist(Node n) {
 			return this.children.indexOf(n);
-		}
+		}*/
 		
 		
 		public void addChild(Node n) {
-			children.add(n);
+			children[children.length]=n;
 		}
 		
 		public void addOutput(int i) {
 			if(i!=-1)
-				this.output.add(i);
+				this.output[this.output.length]=i;
 		}
 		
 	}
 	
-	public static Node root = new AhoCorasick.Node('.',-1);
+	public static Node root = new AhoCorasick.Node('.',-1,1);
 	
 	public static void buildTrie(String[] dictionary, int[] output) {
 		root.failNode = root;
