@@ -12,14 +12,14 @@ public class AhoCorasick {
 	
 	public static class Node {
 		public char element; 
-		public List<Integer> output; 
+		public Set<Integer> output; 
 		public Node[] children;
 		public Node failNode;
 		public Node parent;
 		
 		public Node(char element, int o, int maxOutput) {
 			this.element = element; 
-			this.output = new ArrayList<Integer>();
+			this.output = new HashSet<Integer>();
 			//Arrays.fill(this.output, -1);
 			if(o != -1) {
 				this.output.add(o);
@@ -39,22 +39,12 @@ public class AhoCorasick {
 			return false;
 		}
 
-		public Node childExist(Node n) {
-			return this.children[n.element - 'a'];
+		public Node childExist(char n) {
+			return this.children[n - 'a'];
 		}
 		
 		
-		public boolean addChild(Node n) {
-			
-			if(children[n.element - 'a'] == null) {
-				children[n.element - 'a'] = n;
-				n.parent = this;
-				return true;
-			}
-			else 
-				children[n.element - 'a'].addOutput(n.output.get(0));
-				return false;
-		}
+		
 		
 		public boolean addChild(char element, int o, int maxOutputLength) {
 			
@@ -80,9 +70,9 @@ public class AhoCorasick {
 	public static final Node root = new AhoCorasick.Node('.',-1,1);
 	
 	public static void buildTrie(String[] dictionary, int[] output) {
-		root.failNode = root;
+		root.failNode = AhoCorasick.root;
 		for(int i =0; i<dictionary.length; i++) {
-			System.err.println("Processing : "+i);
+			//System.err.println("Processing : "+dictionary[i]);
 			String cWord = dictionary[i];
 			Node currentRoot = AhoCorasick.root;
 			for(int j=0; j<cWord.length(); j++) {
@@ -108,7 +98,7 @@ public class AhoCorasick {
 				//1 fail all child to root
 				for(Node n: currentNode.children) {
 					if(n == null) continue;
-					n.failNode = currentNode; 
+					n.failNode = AhoCorasick.root; 
 					queue.add(n);
 				}
 			}else {
@@ -124,13 +114,14 @@ public class AhoCorasick {
 						searchNode = failOfParent.children[n.element-'a']; 
 						if( searchNode != null) {
 							n.failNode = searchNode;
+							if(searchNode.output.size()>0) {
+								 n.output.addAll(searchNode.output);
+							}
 							found = true; 
 							break ;
 						}
-							
 						prevFailOfParent = failOfParent; 
-						failOfParent = failOfParent.failNode;
-							
+						failOfParent = failOfParent.failNode;	
 					}while(failOfParent != prevFailOfParent);
 					if(!found){
 						n.failNode = AhoCorasick.root;
@@ -143,35 +134,18 @@ public class AhoCorasick {
 		//System.out.println("Done");
 	}
 	
-	public static int process(String dna, int[] health,  int first, int last) {
+	public static long process(String dna, int[] health,  int first, int last) {
 		
-		Node pointer=root;
+		Node pointer=AhoCorasick.root;
 		Node index;
-		int ho =0;
+		long ho =0;
 		for(int i =0; i<dna.length();) {
 			char curChar = dna.charAt(i);
 			//System.out.println("Current char :" +curChar);
-			index = pointer.childExist(new Node(curChar, -1, health.length));
+			index = pointer.childExist(curChar);
 			if(index != null) {
 				//System.out.println("Found "+curChar +" as child of "+ pointer.element);
 				pointer = index;
-				i++;
-			}else {
-				if(pointer.equals(root)) {
-					//System.out.println("Failing on root "+pointer.element + "For "+ curChar);
-					i++;
-				}else {
-					//System.out.println("Failing on : "+pointer.element + "For "+ curChar);
-				}
-				pointer = pointer.failNode;
-				if(pointer == null ) {
-					System.err.println("WARNING");
-				}
-				
-			}
-			
-			//System.out.println("out size for : "+pointer.element + " "+ pointer.output.size());
-			if(pointer.output.size()>0) {
 				for(int ind: pointer.output) {
 					//System.out.println(ind);
 					if(ind >= first && ind <= last) {
@@ -179,7 +153,24 @@ public class AhoCorasick {
 						ho+=health[ind];
 					}
 				}
+				i++;
+			}else {
+				if(pointer.element == '.') {
+					//System.out.println("Failing on root "+pointer.element + "For "+ curChar);
+					i++;
+				}
+				pointer = pointer.failNode;
+				
+				if(pointer == null ) {
+					System.err.println("WARNING");
+				}
+				
 			}
+			
+			//System.out.println("out size for : "+pointer.element + " "+ pointer.output.size());
+			
+				
+			
 			
 		}
 		
@@ -190,7 +181,9 @@ public class AhoCorasick {
 	
 	public static void test() {
 		
-		String[] genes = {"a" ,"b" ,"c" ,"aa" ,"d" ,"b"};
+		//String[] genes = {"a" ,"b" ,"c" ,"aa" ,"d" ,"b"};
+		
+		String[] genes = {"a","ab","bc","aab","aac","bd"};
 		int[] health = {1, 2 ,3, 4, 5 ,6};
 		
 		buildTrie(genes, health);
@@ -230,8 +223,8 @@ public class AhoCorasick {
         int s = scanner.nextInt();
         scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
 
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
+        long min = Long.MAX_VALUE;
+        long max = Long.MIN_VALUE;
         
         buildTrie(genes, health);
         
@@ -243,14 +236,14 @@ public class AhoCorasick {
             //System.out.println("Processing dna :"+firstLastd[2]);
             int first = Integer.parseInt(firstLastd[0]);
             //int first = scanner.nextInt();
-            System.out.println(first);
+            //System.out.println(first);
             int last = Integer.parseInt(firstLastd[1]);
             //int last = scanner.nextInt();
-            System.out.println(last);
+            //System.out.println(last);
             String d = firstLastd[2];
             //String d = scanner.nextLine();
             //System.out.println(d);
-            int h = process(d, health, first, last);
+            long h = process(d, health, first, last);
             //System.out.println(h);
             min = h<min?h:min; 
             max = h>max?h:max;
