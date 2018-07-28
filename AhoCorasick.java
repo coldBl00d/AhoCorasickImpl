@@ -82,7 +82,7 @@ public class AhoCorasick {
 	public static void buildTrie(String[] dictionary, int[] output) {
 		root.failNode = root;
 		for(int i =0; i<dictionary.length; i++) {
-			//System.err.println("Processing : "+i);
+			System.err.println("Processing : "+i);
 			String cWord = dictionary[i];
 			Node currentRoot = AhoCorasick.root;
 			for(int j=0; j<cWord.length(); j++) {
@@ -113,19 +113,28 @@ public class AhoCorasick {
 				}
 			}else {
 				//go to fail of its parent and try to find itself 
-				//if not found point to root; 
+				//if not found fail again and try; 
 				for(Node n: currentNode.children) {
 					if(n==null) continue;
-					Node failOfParent = n.parent.failNode;
-					if( failOfParent == null) {
-						System.err.println("PARENT OF "+n.parent.element + " IS NULL");
-						break;
-					}
-					Node searchNode = failOfParent.children[n.element-'a']; 
-					if( searchNode != null)
-						n.failNode = searchNode;
-					else
+					Node searchNode=null; 
+					Node failOfParent= n.parent.failNode; 
+					Node prevFailOfParent; 
+					boolean found=false;
+					do {
+						searchNode = failOfParent.children[n.element-'a']; 
+						if( searchNode != null) {
+							n.failNode = searchNode;
+							found = true; 
+							break ;
+						}
+							
+						prevFailOfParent = failOfParent; 
+						failOfParent = failOfParent.failNode;
+							
+					}while(failOfParent != prevFailOfParent);
+					if(!found){
 						n.failNode = AhoCorasick.root;
+					}
 					queue.add(n);
 				}
 			}
@@ -135,7 +144,7 @@ public class AhoCorasick {
 	}
 	
 	public static int process(String dna, int[] health,  int first, int last) {
-		//System.out.println("Processing dna :"+dna);
+		
 		Node pointer=root;
 		Node index;
 		int ho =0;
@@ -194,7 +203,7 @@ public class AhoCorasick {
 	}
 
     public static void main(String[] args) {
-    	test();
+    	//test();
         int n = scanner.nextInt();
         scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
 
@@ -231,13 +240,16 @@ public class AhoCorasick {
         for (int sItr = 0; sItr < s; sItr++) {
         	
             String[] firstLastd = scanner.nextLine().split(" ");
-
+            //System.out.println("Processing dna :"+firstLastd[2]);
             int first = Integer.parseInt(firstLastd[0]);
-
+            //int first = scanner.nextInt();
+            System.out.println(first);
             int last = Integer.parseInt(firstLastd[1]);
-
+            //int last = scanner.nextInt();
+            System.out.println(last);
             String d = firstLastd[2];
-            
+            //String d = scanner.nextLine();
+            //System.out.println(d);
             int h = process(d, health, first, last);
             //System.out.println(h);
             min = h<min?h:min; 
