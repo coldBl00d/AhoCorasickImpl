@@ -50,7 +50,7 @@ public class AhoCorasick {
 		
 	}
 	
-	public static Node root = new AhoCorasick.Node('.',0);
+	public static Node root = new AhoCorasick.Node('.',-1);
 	
 	public static void buildTrie(String[] dictionary, int[] output) {
 		root.failNode = root;
@@ -67,13 +67,13 @@ public class AhoCorasick {
 				int index = currentRoot.childExist(newNode);
 				if ( index == -1) {
 					//no child
-					System.out.println("Child : " +  newNode.element + " does not exist under current root "+currentRoot.element);
-					System.out.println("Adding it and making it current root... ");
+					//System.out.println("Child : " +  newNode.element + " does not exist under current root "+currentRoot.element);
+					//System.out.println("Adding it and making it current root... ");
 					currentRoot.addChild(newNode);
 					newNode.parent = currentRoot;
 					currentRoot = newNode; 
 				}else {
-					System.out.println("Child : " +  newNode.element + " does exist exist under current root "+currentRoot.element +", making it current root");
+					//System.out.println("Child : " +  newNode.element + " does exist exist under current root "+currentRoot.element +", making it current root");
 					currentRoot = currentRoot.children.get(index);
 					currentRoot.addOutput(o);
 				}
@@ -123,11 +123,12 @@ public class AhoCorasick {
 			if(index != -1) {
 				System.out.println("Found "+curChar +" as child of "+ pointer.element);
 				pointer = pointer.children.get(index);
+				
 				i++;
 			}else {
 				System.out.println("Failing on : "+pointer.element + "For "+ curChar);
 				if(pointer.equals(root)) {
-					//System.out.println("Failing on : "+pointer.element + "For "+ curChar);
+					System.out.println("Failing on : "+pointer.element + "For "+ curChar);
 					i++;
 				}
 				pointer = pointer.failNode;
@@ -135,11 +136,13 @@ public class AhoCorasick {
 			}
 			if(pointer.output.size()>0) {
 				for(int ind: pointer.output) {
+					System.out.println(ind);
 					if(ind >= first && ind <= last) {
 						ho+=health[ind];
 					}
 				}
 			}
+			
 		}
 		return ho;
 	}
@@ -155,7 +158,7 @@ public class AhoCorasick {
 		buildTrie(d,o);
 		printChilds(root);
 		//System.out.println(process("caaab", o, 1, 5));
-		System.out.println(process("bcdybc", o, 2, 4));
+		System.out.println(process("xyz", o, 0, 4));
 		
 	}
 	
