@@ -46,8 +46,16 @@ public class AhoCorasick {
 		}
 		
 		
-		public void addChild(Node n) {
-			children[n.element - 'a']=n;
+		public boolean addChild(Node n) {
+			
+			if(children[n.element - 'a'] == null) {
+				children[n.element - 'a'] = n;
+				n.parent = this;
+				return true;
+			}
+			else 
+				children[n.element - 'a'].addOutput(n.output[0]);
+				return false;
 		}
 		
 		public void addOutput(int i) {
@@ -74,18 +82,15 @@ public class AhoCorasick {
 					o = i; 
 				}
 				Node newNode = new Node(cChar,o, output.length);
-				Node searchNode = currentRoot.childExist(newNode);
-				if ( searchNode == null) {
+				if ( currentRoot.addChild(newNode)) {
 					//no child
 					System.out.println("Child : " +  newNode.element + " does not exist under current root "+currentRoot.element);
 					System.out.println("Adding it and making it current root... ");
-					currentRoot.addChild(newNode);
-					newNode.parent = currentRoot;
 					currentRoot = newNode; 
 				}else {
 					System.out.println("Child : " +  newNode.element + " does exist exist under current root "+currentRoot.element +", making it current root");
-					currentRoot = searchNode;
-					currentRoot.addOutput(o);
+					currentRoot = currentRoot.children[newNode.element - 'a'];;
+					//currentRoot.addOutput(o);
 				}
 			}
 		}
