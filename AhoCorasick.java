@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,13 +14,19 @@ public class AhoCorasick {
 		public int[] output; 
 		public Node[] children;
 		public Node failNode;
-		public Node parent; 
+		public Node parent;
+		int oi;
 		
 		public Node(char element, int o, int maxOutput) {
 			this.element = element; 
 			this.output = new int[maxOutput];
-			if(o != -1)
-				this.output[output.length]=o;
+			Arrays.fill(this.output, -1);
+			this.oi = 0;
+			if(o != -1 && this.output.length>0) {
+				this.output[0]=o;
+				this.oi++;
+			}
+				
 			this.children = new Node[26];
 		}
 		
@@ -34,18 +41,21 @@ public class AhoCorasick {
 			return false;
 		}
 
-		/*public int childExist(Node n) {
-			return this.children.indexOf(n);
-		}*/
+		public Node childExist(Node n) {
+			return this.children[n.element - 'a'];
+		}
 		
 		
 		public void addChild(Node n) {
-			children[children.length]=n;
+			children[n.element - 'a']=n;
 		}
 		
 		public void addOutput(int i) {
-			if(i!=-1)
-				this.output[this.output.length]=i;
+			if(i!=-1) {
+				this.output[oi]=i;
+				oi++;
+			}
+				
 		}
 		
 	}
@@ -63,18 +73,18 @@ public class AhoCorasick {
 				if(j == cWord.length()-1) {
 					o = i; 
 				}
-				Node newNode = new Node(cChar,o);
-				int index = currentRoot.childExist(newNode);
-				if ( index == -1) {
+				Node newNode = new Node(cChar,o, output.length);
+				Node searchNode = currentRoot.childExist(newNode);
+				if ( searchNode == null) {
 					//no child
-					//System.out.println("Child : " +  newNode.element + " does not exist under current root "+currentRoot.element);
-					//System.out.println("Adding it and making it current root... ");
+					System.out.println("Child : " +  newNode.element + " does not exist under current root "+currentRoot.element);
+					System.out.println("Adding it and making it current root... ");
 					currentRoot.addChild(newNode);
 					newNode.parent = currentRoot;
 					currentRoot = newNode; 
 				}else {
-					//System.out.println("Child : " +  newNode.element + " does exist exist under current root "+currentRoot.element +", making it current root");
-					currentRoot = currentRoot.children.get(index);
+					System.out.println("Child : " +  newNode.element + " does exist exist under current root "+currentRoot.element +", making it current root");
+					currentRoot = searchNode;
 					currentRoot.addOutput(o);
 				}
 			}
@@ -90,6 +100,7 @@ public class AhoCorasick {
 			if(currentNode.element == '.') {
 				//1 fail all child to root
 				for(Node n: currentNode.children) {
+					if(n == null) break;
 					n.failNode = currentNode; 
 					queue.add(n);
 				}
@@ -97,11 +108,12 @@ public class AhoCorasick {
 				//go to fail of its parent and try to find itself 
 				//if not found point to root; 
 				for(Node n: currentNode.children) {
+					if(n==null) break;
 					Node failOfParent = n.parent.failNode;
 					assert failOfParent != null; 
-					int index = failOfParent.children.indexOf(n); 
-					if( index != -1)
-						n.failNode = failOfParent.children.get(index);
+					Node searchNode = failOfParent.childExist(n); 
+					if( searchNode != null)
+						n.failNode = searchNode;
 					else
 						n.failNode = AhoCorasick.root;
 					queue.add(n);
@@ -113,29 +125,30 @@ public class AhoCorasick {
 	}
 	
 	public static int process(String dna, int[] health,  int first, int last) {
-		Node pointer= root;
-		int index;
+		Node pointer=root;
+		Node index;
 		int ho =0;
 		for(int i =0; i<dna.length();) {
 			char curChar = dna.charAt(i);
 			System.out.println("Current char :" +curChar);
-			index = pointer.children.indexOf(new Node(curChar, -1));
-			if(index != -1) {
+			index = pointer.childExist(new Node(curChar, -1, 0));
+			if(index != null) {
 				System.out.println("Found "+curChar +" as child of "+ pointer.element);
-				pointer = pointer.children.get(index);
-				
+				pointer = index;
 				i++;
 			}else {
-				System.out.println("Failing on : "+pointer.element + "For "+ curChar);
 				if(pointer.equals(root)) {
-					System.out.println("Failing on : "+pointer.element + "For "+ curChar);
+					System.out.println("Failing on root "+pointer.element + "For "+ curChar);
 					i++;
+				}else {
+					System.out.println("Failing on : "+pointer.element + "For "+ curChar);
 				}
 				pointer = pointer.failNode;
 				
 			}
-			if(pointer.output.size()>0) {
+			if(pointer.output.length>0) {
 				for(int ind: pointer.output) {
+					if(ind==-1) break;
 					System.out.println(ind);
 					if(ind >= first && ind <= last) {
 						ho+=health[ind];
@@ -157,8 +170,8 @@ public class AhoCorasick {
 		
 		buildTrie(d,o);
 		printChilds(root);
-		//System.out.println(process("caaab", o, 1, 5));
-		System.out.println(process("xyz", o, 0, 4));
+		System.out.println(process("caaab", o, 1, 5));
+		//System.out.println(process("xyz", o, 0, 4));
 		
 	}
 	
@@ -166,6 +179,7 @@ public class AhoCorasick {
 		System.out.println("Parent: "+n.element);
 		System.out.println("Children :");
 		for(Node no: n.children) {
+			if(no == null) break;
 			System.out.print(no.element+"Fail:"+no.failNode.element+"  ");
 			System.out.print( "Output Indexes (");
 			for(int i : no.output)
@@ -175,8 +189,11 @@ public class AhoCorasick {
 		}
 		System.out.println();
 		
-		for(Node no: n.children)
+		for(Node no: n.children) {
+			if(no ==null) break;
 			printChilds(no);
+		}
+			
 		
 	}
 
