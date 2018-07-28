@@ -42,10 +42,7 @@ public class AhoCorasick {
 		public Node childExist(char n) {
 			return this.children[n - 'a'];
 		}
-		
-		
-		
-		
+			
 		public boolean addChild(char element, int o, int maxOutputLength) {
 			
 			if(children[element - 'a'] == null) {
